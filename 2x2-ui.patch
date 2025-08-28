@@ -1,0 +1,284 @@
+diff --git a/public/index.html b/public/index.html
+--- a/public/index.html
++++ b/public/index.html
+@@ -41,6 +41,7 @@
+   .sectionTitle{ margin:8px 0 2px; font-size:12px; opacity:.9; border-top:1px dashed var(--panel-brd); padding-top:8px }
+ </style>
+ </head>
+ <body>
+ <canvas id="cosmos"></canvas>
+ <button id="uiToggle" title="Mostrar interface (U)">Mostrar UI</button>
+@@ -98,6 +99,8 @@
+     <label>Zoom (rodinha/pinça)</label><input id="zoom" type="range" min="0.3" max="3.0" step="0.01" value="1.00">
+ 
++    <label>Modo 2×2 (beta)</label><input id="twoByTwo" type="checkbox">
++
+     <label>⚔️ Batalha automática</label><input id="battle" type="checkbox" checked>
+     <label>Raio de engajamento</label><input id="engage" type="range" min="100" max="700" step="10" value="260">
+     <label>Dano global (mult.)</label><input id="dmg" type="range" min="0.5" max="3" step="0.1" value="1.2">
+@@ -192,6 +195,63 @@
+     <label>Auto-ULT</label><input id="autoUltB" type="checkbox" checked>
+ 
++    <!-- ====== NOVOS SLOTS 2×2: Pink 2 ====== -->
++    <div class="sectionTitle">Herói Pink 2</div><div></div>
++    <label>Herói</label>
++    <select id="hHeroA2">
++      <option value="wanda" selected>Wanda Maximoff (Escarlate)</option>
++      <option value="fate">Doctor Fate (Dourado)</option>
++      <option value="magneto">Magneto (Magnético)</option>
++      <option value="loki">Loki (Verde)</option>
++      <option value="iceman">Ice Man (Azul Celeste)</option>
++      <option value="emma">Emma Frost (Diamante)</option>
++      <option value="phoenix">Jean Grey (Fênix)</option>
++    </select>
++    <label>Nome</label><input id="hNameA2" type="text" value="Wanda 2"/>
++    <label>Cor</label><input id="hColorA2" type="color" value="#ff1744"/>
++    <label>HP Máx</label><input id="hHpA2" type="range" min="60" max="400" step="5" value="120">
++    <label>Velocidade</label><input id="hSpeedA2" type="range" min="0" max="8" step="0.1" value="2.1">
++    <label>Velocidade de Raios</label><input id="hBoltSpeedA2" type="range" min="4" max="30" step="0.5" value="12">
++    <label>Taxa de Disparo (bolts)</label><input id="hBoltRateA2" type="range" min="0.25" max="3" step="0.05" value="1">
++    <label>Cooldown da ULT (s)</label><input id="hUltCdA2" type="range" min="4" max="60" step="0.5" value="22">
++    <label>Precisão do raio</label><input id="accBoltA2" type="range" min="0" max="1" step="0.01" value="0.75">
++    <label>Estilo</label>
++    <select id="hStyleA2">
++      <option value="attack">Ataque</option>
++      <option value="balanced" selected>Balanceado</option>
++      <option value="defense">Defesa</option>
++    </select>
++    <label>Auto-ULT</label><input id="autoUltA2" type="checkbox" checked>
++
++    <!-- ====== NOVOS SLOTS 2×2: Yellow 2 ====== -->
++    <div class="sectionTitle">Herói Yellow 2</div><div></div>
++    <label>Herói</label>
++    <select id="hHeroB2">
++      <option value="wanda">Wanda Maximoff (Escarlate)</option>
++      <option value="fate" selected>Doctor Fate (Dourado)</option>
++      <option value="magneto">Magneto (Magnético)</option>
++      <option value="loki">Loki (Verde)</option>
++      <option value="iceman">Ice Man (Azul Celeste)</option>
++      <option value="emma">Emma Frost (Diamante)</option>
++      <option value="phoenix">Jean Grey (Fênix)</option>
++    </select>
++    <label>Nome</label><input id="hNameB2" type="text" value="Fate 2"/>
++    <label>Cor</label><input id="hColorB2" type="color" value="#ffd400"/>
++    <label>HP Máx</label><input id="hHpB2" type="range" min="60" max="400" step="5" value="110">
++    <label>Velocidade</label><input id="hSpeedB2" type="range" min="0" max="8" step="0.1" value="2.0">
++    <label>Velocidade de Raios</label><input id="hBoltSpeedB2" type="range" min="4" max="30" step="0.5" value="12">
++    <label>Taxa de Disparo (bolts)</label><input id="hBoltRateB2" type="range" min="0.25" max="3" step="0.05" value="1">
++    <label>Cooldown da ULT (s)</label><input id="hUltCdB2" type="range" min="4" max="60" step="0.5" value="22">
++    <label>Precisão do raio</label><input id="accBoltB2" type="range" min="0" max="1" step="0.01" value="0.75">
++    <label>Estilo</label>
++    <select id="hStyleB2">
++      <option value="attack">Ataque</option>
++      <option value="balanced" selected>Balanceado</option>
++      <option value="defense">Defesa</option>
++    </select>
++    <label>Auto-ULT</label><input id="autoUltB2" type="checkbox" checked>
++
+     <!-- PRESETS -->
+     <div class="sectionTitle">Presets</div><div></div>
+     <label>Selecionar</label><select id="presetSelect"></select>
+@@ -237,6 +297,14 @@
+   // A
+   hHeroA: ui('hHeroA'), hNameA: ui('hNameA'), hColorA: ui('hColorA'),
+   hHpA: ui('hHpA'), hSpeedA: ui('hSpeedA'), hBoltSpeedA: ui('hBoltSpeedA'), hBoltRateA: ui('hBoltRateA'), hUltCdA: ui('hUltCdA'),
+   accBoltA: ui('accBoltA'), hStyleA: ui('hStyleA'), autoUltA: ui('autoUltA'),
+   // B
+   hHeroB: ui('hHeroB'), hNameB: ui('hNameB'), hColorB: ui('hColorB'),
+   hHpB: ui('hHpB'), hSpeedB: ui('hSpeedB'), hBoltSpeedB: ui('hBoltSpeedB'), hBoltRateB: ui('hBoltRateB'), hUltCdB: ui('hUltCdB'),
+   accBoltB: ui('accBoltB'), hStyleB: ui('hStyleB'), autoUltB: ui('autoUltB'),
++  // 2×2 toggle
++  twoByTwo: ui('twoByTwo'),
++  // A2
++  hHeroA2: ui('hHeroA2'), hNameA2: ui('hNameA2'), hColorA2: ui('hColorA2'),
++  hHpA2: ui('hHpA2'), hSpeedA2: ui('hSpeedA2'), hBoltSpeedA2: ui('hBoltSpeedA2'), hBoltRateA2: ui('hBoltRateA2'), hUltCdA2: ui('hUltCdA2'),
++  accBoltA2: ui('accBoltA2'), hStyleA2: ui('hStyleA2'), autoUltA2: ui('autoUltA2'),
++  // B2
++  hHeroB2: ui('hHeroB2'), hNameB2: ui('hNameB2'), hColorB2: ui('hColorB2'),
++  hHpB2: ui('hHpB2'), hSpeedB2: ui('hSpeedB2'), hBoltSpeedB2: ui('hBoltSpeedB2'), hBoltRateB2: ui('hBoltRateB2'), hUltCdB2: ui('hUltCdB2'),
++  accBoltB2: ui('accBoltB2'), hStyleB2: ui('hStyleB2'), autoUltB2: ui('autoUltB2'),
+ 
+   // Presets
+   presetSelect: ui('presetSelect'), presetName: ui('presetName'),
+@@ -273,6 +341,10 @@
+ const teamCfg = {
+   A: { kit:'wanda',   name:'Wanda', color:'#ff1744', hp:120, speedMul:1.05, boltMul:1.00, boltRate:1.00, ultCd:22, accBolt:0.75, style:'balanced', autoUlt:true },
+   B: { kit:'fate',    name:'Fate',  color:'#ffd400', hp:110, speedMul:1.00, boltMul:0.96, boltRate:1.00, ultCd:22, accBolt:0.74, style:'balanced', autoUlt:true }
++  ,
++  // Slots extras para 2×2 (ainda não integrados ao motor – UI apenas)
++  A2: { kit:'wanda',   name:'Wanda 2', color:'#ff1744', hp:120, speedMul:1.05, boltMul:1.00, boltRate:1.00, ultCd:22, accBolt:0.75, style:'balanced', autoUlt:true },
++  B2: { kit:'fate',    name:'Fate 2',  color:'#ffd400', hp:110, speedMul:1.00, boltMul:0.96, boltRate:1.00, ultCd:22, accBolt:0.74, style:'balanced', autoUlt:true }
+ };
+ 
+ // ---------- Sincronização UI <-> Config ----------
+@@ -287,6 +359,10 @@
+ }
+ 
+ function applyKitToUI(team, kitKey){
++  // função original (A/B). Para A2/B2 veja applyKitToUI_2x
++  if(team==='A2' || team==='B2'){ applyKitToUI_2x(team, kitKey); return; }
++
+   const kit = HERO_KITS[kitKey]; if(!kit) return;
+   const isA = (team==='A');
+   (isA?U.hHeroA:U.hHeroB).value = kitKey;
+@@ -331,7 +407,54 @@
+   syncScoreboard();
+ }
+ 
++// === Versões para A2/B2 (UI apenas) ===
++function applyKitToUI_2x(team, kitKey){
++  const kit = HERO_KITS[kitKey]; if(!kit) return;
++  const isA2 = (team==='A2');
++  (isA2?U.hHeroA2:U.hHeroB2).value = kitKey;
++  if(isA2){
++    if(!(U.hNameA2.value||'').trim()) U.hNameA2.value = kit.name + ' 2';
++    U.hColorA2.value = kit.base; U.hHpA2.value = kit.hp;
++    U.hSpeedA2.value=(kit.speedMul*2).toFixed(2);
++    U.hBoltSpeedA2.value=(kit.boltMul*12).toFixed(2);
++    U.hBoltRateA2.value=(1.00).toFixed(2);
++    U.hUltCdA2.value=kit.ultCd; U.accBoltA2.value=kit.accBolt;
++  }else{
++    if(!(U.hNameB2.value||'').trim()) U.hNameB2.value = kit.name + ' 2';
++    U.hColorB2.value = kit.base; U.hHpB2.value = kit.hp;
++    U.hSpeedB2.value=(kit.speedMul*2).toFixed(2);
++    U.hBoltSpeedB2.value=(kit.boltMul*12).toFixed(2);
++    U.hBoltRateB2.value=(1.00).toFixed(2);
++    U.hUltCdB2.value=kit.ultCd; U.accBoltB2.value=kit.accBolt;
++  }
++  syncCfgFromUI_2x(team);
++}
++function syncUIFromCfg(team){
++  // mantém compatibilidade: A/B originais
++  if(team==='A2' || team==='B2'){ syncUIFromCfg_2x(team); return; }
++  const c = teamCfg[team]; const isA=(team==='A');
++  if(isA){
++    U.hHeroA.value=c.kit; U.hNameA.value=c.name; U.hColorA.value=c.color;
++    U.hHpA.value=c.hp; U.hSpeedA.value=(c.speedMul*2).toFixed(2);
++    U.hBoltSpeedA.value=(c.boltMul*12).toFixed(2);
++    U.hBoltRateA.value=(c.boltRate||1).toFixed(2);
++    U.hUltCdA.value=c.ultCd;
++    U.accBoltA.value=c.accBolt; U.hStyleA.value=c.style; U.autoUltA.checked=c.autoUlt;
++  }else{
++    U.hHeroB.value=c.kit; U.hNameB.value=c.name; U.hColorB.value=c.color;
++    U.hHpB.value=c.hp; U.hSpeedB.value=(c.speedMul*2).toFixed(2);
++    U.hBoltSpeedB.value=(c.boltMul*12).toFixed(2);
++    U.hBoltRateB.value=(c.boltRate||1).toFixed(2);
++    U.hUltCdB.value=c.ultCd;
++    U.accBoltB.value=c.accBolt; U.hStyleB.value=c.style; U.autoUltB.checked=c.autoUlt;
++  }
++  syncScoreboard();
++}
++function syncUIFromCfg_2x(team){
++  const c = teamCfg[team]; const isA2=(team==='A2');
++  if(isA2){
++    U.hHeroA2.value=c.kit; U.hNameA2.value=c.name; U.hColorA2.value=c.color;
++    U.hHpA2.value=c.hp; U.hSpeedA2.value=(c.speedMul*2).toFixed(2);
++    U.hBoltSpeedA2.value=(c.boltMul*12).toFixed(2);
++    U.hBoltRateA2.value=(c.boltRate||1).toFixed(2);
++    U.hUltCdA2.value=c.ultCd; U.accBoltA2.value=c.accBolt; U.hStyleA2.value=c.style; U.autoUltA2.checked=c.autoUlt;
++  }else{
++    U.hHeroB2.value=c.kit; U.hNameB2.value=c.name; U.hColorB2.value=c.color;
++    U.hHpB2.value=c.hp; U.hSpeedB2.value=(c.speedMul*2).toFixed(2);
++    U.hBoltSpeedB2.value=(c.boltMul*12).toFixed(2);
++    U.hBoltRateB2.value=(c.boltRate||1).toFixed(2);
++    U.hUltCdB2.value=c.ultCd; U.accBoltB2.value=c.accBolt; U.hStyleB2.value=c.style; U.autoUltB2.checked=c.autoUlt;
++  }
++}
+ function syncCfgFromUI(team){
+-  const isA=(team==='A');
++  if(team==='A2' || team==='B2'){ syncCfgFromUI_2x(team); return; }
++  const isA=(team==='A');
+   const read = isA ? {
+     kit: U.hHeroA.value, name: U.hNameA.value, color: U.hColorA.value,
+     hp: +U.hHpA.value, speedMul: clamp(+U.hSpeedA.value/2, 0, 4),
+@@ -349,6 +472,24 @@
+   teamCfg[team] = { ...teamCfg[team], ...read };
+   syncScoreboard();
+ }
++function syncCfgFromUI_2x(team){
++  const isA2=(team==='A2');
++  const read = isA2 ? {
++    kit: U.hHeroA2.value, name: U.hNameA2.value, color: U.hColorA2.value,
++    hp: +U.hHpA2.value, speedMul: clamp(+U.hSpeedA2.value/2, 0, 4),
++    boltMul: clamp(+U.hBoltSpeedA2.value/12, 0.1, 4),
++    boltRate: clamp(+U.hBoltRateA2.value, 0.25, 3),
++    ultCd: +U.hUltCdA2.value,
++    accBolt: +U.accBoltA2.value, style: U.hStyleA2.value, autoUlt: !!U.autoUltA2.checked
++  } : {
++    kit: U.hHeroB2.value, name: U.hNameB2.value, color: U.hColorB2.value,
++    hp: +U.hHpB2.value, speedMul: clamp(+U.hSpeedB2.value/2, 0, 4),
++    boltMul: clamp(+U.hBoltSpeedB2.value/12, 0.1, 4),
++    boltRate: clamp(+U.hBoltRateB2.value, 0.25, 3),
++    ultCd: +U.hUltCdB2.value,
++    accBolt: +U.accBoltB2.value, style: U.hStyleB2.value, autoUlt: !!U.autoUltB2.checked
++  };
++  teamCfg[team] = { ...teamCfg[team], ...read };
++}
+ 
+ // ---------- Preenche selects com TODOS os heróis ----------
+ function populateHeroSelects(){
+@@ -359,12 +500,18 @@
+     sel.innerHTML = '';
+     for(const k of order){
+       const kit = HERO_KITS[k]; if(!kit) continue;
+       const o = document.createElement('option');
+       o.value = k; o.textContent = kit.label || kit.full || kit.name || k;
+       sel.appendChild(o);
+     }
+     sel.value = (keep && HERO_KITS[keep]) ? keep : (order[0] || '');
+   };
+   fill(U.hHeroA, teamCfg.A.kit);
+   fill(U.hHeroB, teamCfg.B.kit);
++  // novos selects 2×2
++  if(U.hHeroA2){ fill(U.hHeroA2, teamCfg.A2.kit); }
++  if(U.hHeroB2){ fill(U.hHeroB2, teamCfg.B2.kit); }
+ }
+ 
+ // ---------- Bindings IA ----------
+ function bindIA(){
+   U.hHeroA.addEventListener('input', ()=>applyKitToUI('A', U.hHeroA.value));
+   U.hHeroB.addEventListener('input', ()=>applyKitToUI('B', U.hHeroB.value));
+@@ -373,6 +520,14 @@
+     .forEach(id=>U[id].addEventListener('input', ()=>syncCfgFromUI('A')));
+   ['hNameB','hColorB','hHpB','hSpeedB','hBoltSpeedB','hBoltRateB','hUltCdB','accBoltB','hStyleB','autoUltB']
+     .forEach(id=>U[id].addEventListener('input', ()=>syncCfgFromUI('B')));
+ 
++  // bindings 2×2
++  if(U.hHeroA2){ U.hHeroA2.addEventListener('input', ()=>applyKitToUI('A2', U.hHeroA2.value)); }
++  if(U.hHeroB2){ U.hHeroB2.addEventListener('input', ()=>applyKitToUI('B2', U.hHeroB2.value)); }
++  ;['hNameA2','hColorA2','hHpA2','hSpeedA2','hBoltSpeedA2','hBoltRateA2','hUltCdA2','accBoltA2','hStyleA2','autoUltA2']
++    .forEach(id=>{ if(U[id]) U[id].addEventListener('input', ()=>syncCfgFromUI('A2')); });
++  ;['hNameB2','hColorB2','hHpB2','hSpeedB2','hBoltSpeedB2','hBoltRateB2','hUltCdB2','accBoltB2','hStyleB2','autoUltB2']
++    .forEach(id=>{ if(U[id]) U[id].addEventListener('input', ()=>syncCfgFromUI('B2')); });
++
+   const toggleIA = ()=> U.iaPanel.classList.toggle('collapsed');
+   U.toggleIA.addEventListener('click', toggleIA);
+   U.closeIA.addEventListener('click', toggleIA);
+@@ -419,6 +574,8 @@
+     sndOn:!!U.sndOn.checked, sndVol:+U.sndVol.value,
+     mBolt:!!U.mBolt.checked, mOrb:!!U.mOrb.checked, mWave:!!U.mWave.checked, mShield:!!U.mShield.checked,
+     // por-herói
+-    A:{...teamCfg.A}, B:{...teamCfg.B}
++    A:{...teamCfg.A}, B:{...teamCfg.B},
++    A2:{...teamCfg.A2}, B2:{...teamCfg.B2}
+   };
+ }
+ function applySettings(obj){
+@@ -431,8 +588,12 @@
+   ['battle','mBolt','mOrb','mWave','mShield','sndOn'].forEach(k=> set(U[k], obj[k]));
+   if(obj.A){ teamCfg.A = {...teamCfg.A, ...obj.A}; syncUIFromCfg('A'); }
+   if(obj.B){ teamCfg.B = {...teamCfg.B, ...obj.B}; syncUIFromCfg('B'); }
++  if(obj.A2){ teamCfg.A2 = {...teamCfg.A2, ...obj.A2}; if(U.hHeroA2) syncUIFromCfg('A2'); }
++  if(obj.B2){ teamCfg.B2 = {...teamCfg.B2, ...obj.B2}; if(U.hHeroB2) syncUIFromCfg('B2'); }
+   refreshPresetSelect();
+ }
+@@ -451,6 +612,10 @@
+ applyKitToUI('A', teamCfg.A.kit);
+ applyKitToUI('B', teamCfg.B.kit);
++// inicializa blocos 2×2 (UI)
++if(U.hHeroA2) applyKitToUI('A2', teamCfg.A2.kit);
++if(U.hHeroB2) applyKitToUI('B2', teamCfg.B2.kit);
++
+ refreshPresetSelect();
+ 
+ })(); // fim Parte 1/4

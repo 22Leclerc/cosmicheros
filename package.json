@@ -1,0 +1,79 @@
+{
+  "name": "cosmicheros",
+  "productName": "CosmicHeros",
+  "version": "0.1.0",
+  "description": "Ambiente Cósmico — Batalha de Heróis",
+  "author": "Você",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder -w",
+    "dist:x64": "electron-builder -w --x64",
+    "dist:ia32": "electron-builder -w --ia32",
+    "publish": "electron-builder -w --publish always",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.8"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.seudominio.cosmicheros",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "public/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "public/assets/**"
+    ],
+    "compression": "maximum",
+
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CosmicHeros",
+      "installerLanguages": [
+        "pt_BR",
+        "en_US"
+      ],
+      "differentialPackage": true
+    },
+
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://exemplo.com/cosmicheros/updates/"
+      }
+    ]
+  }
+}
+
