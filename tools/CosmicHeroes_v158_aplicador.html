@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CosmicHeroes — Aplicador v158</title>
+<style>
+  :root{color-scheme:dark;--bg:#050611;--panel:#10142a;--line:#38416b;--text:#eef1ff;--muted:#aeb7d9;--accent:#9e63ff;--ok:#5ff0bb;--err:#ff6f91}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 20%,#20133c 0,#090b18 42%,#02030a 100%);font-family:system-ui,Segoe UI,Roboto,sans-serif;color:var(--text)}
+  main{width:min(760px,100%);padding:28px;border:1px solid var(--line);border-radius:20px;background:rgba(16,20,42,.92);box-shadow:0 24px 80px rgba(0,0,0,.5)}
+  h1{font-size:24px;margin:0 0 8px} p{color:var(--muted);line-height:1.55}
+  .drop{display:block;margin:22px 0;padding:26px;border:1px dashed #7660bb;border-radius:16px;background:rgba(158,99,255,.08);text-align:center;cursor:pointer}
+  .drop:hover{background:rgba(158,99,255,.14)} input{display:none}
+  button{width:100%;border:0;border-radius:12px;padding:14px 18px;font-size:16px;font-weight:750;color:#080912;background:linear-gradient(135deg,#d9c7ff,#7cf2d1);cursor:pointer}
+  button:disabled{opacity:.35;cursor:not-allowed}
+  ul{padding-left:20px;color:var(--muted)} li{margin:7px 0}
+  #status{margin-top:16px;padding:12px 14px;border-radius:10px;background:#090c1a;color:var(--muted);white-space:pre-wrap}
+  .ok{color:var(--ok)!important}.err{color:var(--err)!important} code{color:#d9c7ff}
+</style>
+</head>
+<body>
+<main>
+  <h1>Aplicador CosmicHeroes v158</h1>
+  <p>Selecione o arquivo <strong>CosmicHeroes v157</strong>. O aplicador acrescentará a correção dos orbes da Sentinela e baixará uma nova cópia, sem alterar o original.</p>
+  <label class="drop" for="sourceFile">
+    <strong id="fileLabel">Clique para escolher a v157</strong><br>
+    <small>Arquivo HTML local</small>
+  </label>
+  <input id="sourceFile" type="file" accept=".html,text/html">
+  <ul>
+    <li>Clones deixam de consumir os orbes compartilhados.</li>
+    <li>Orbes permanecem visíveis por no mínimo <strong>1,15 s</strong>.</li>
+    <li>Consumo limitado a um orbe a cada <strong>0,9 s</strong>.</li>
+    <li>Círculos-fantasma dos clones são apagados antes do quadro seguinte.</li>
+    <li>Orbes recebem núcleo branco, halo e arco orbital mais legíveis.</li>
+  </ul>
+  <button id="generate" disabled>Gerar CosmicHeroes v158 corrigido</button>
+  <div id="status">Aguardando o arquivo v157.</div>
+</main>
+<script>
+(() => {
+  const input=document.getElementById('sourceFile');
+  const button=document.getElementById('generate');
+  const status=document.getElementById('status');
+  const label=document.getElementById('fileLabel');
+  let sourceText='';
+  let sourceName='';
+
+  const runtimePatch = String.raw`
+<!-- CosmicHeroes v158 — Dark Sentinel Orb Visibility Fix -->
+<script id="cosmicheros-v158-dark-sentinel-orb-fix">
+(() => {
+  const CFG = window.DARK_SENTINEL_ORB_V158 = Object.assign({
+    minVisibleMs: 1150,
+    consumeCooldownMs: 900,
+    cloneConsumesSharedOrbs: false,
+    eraseGhostBodies: true,
+    enhanceOrbVisuals: true
+  }, window.DARK_SENTINEL_ORB_V158 || {});
+
+  function installDarkSentinelOrbV158(){
+    if(window.__darkSentinelOrbV158Installed) return true;
+    const ready =
+      typeof darkSentinelConsumeObeliskShot === 'function' &&
+      typeof darkSentinelExplodeObeliskOrb === 'function' &&
+      typeof darkSentinelObeliskOrbPos === 'function' &&
+      typeof drawBackground === 'function' &&
+      typeof drawHero === 'function';
+    if(!ready) return false;
+
+    window.__darkSentinelOrbV158Installed = true;
+    const nowMs = () => (typeof performance!=='undefined' && performance.now) ? performance.now() : Date.now();
+
+    const originalConsume = darkSentinelConsumeObeliskShot;
+    const patchedConsume = function(caster){
+      const boost={mul:1,visual:false,widthMul:1,turnMul:1};
+      try{
+        if(!caster || !caster.alive) return boost;
+        const owner=(typeof darkOwnerOf==='function') ? darkOwnerOf(caster) : null;
+        const now=nowMs();
+
+        // O clone mantém somente a carga individual de sua linha com o Obelisco.
+        if(caster.isDarkSentinelClone){
+          if((caster._darkObeliskLineCharge||0)>0){
+            boost.mul *= Math.max(1, +(DARK_SENTINEL.obeliskLineShotMul||1.28));
+            boost.visual=true;
+            boost.widthMul=Math.max(boost.widthMul,1.20);
+            boost.turnMul=Math.max(boost.turnMul,1.10);
+            caster._darkObeliskLineCharge=0;
+            caster._darkObeliskLineChargedUntil=0;
+            caster._darkObeliskShotFxUntil=now+520;
+            if(owner) owner._darkObeliskLinePulseUntil=now+620;
+          }
+          // v158: nunca alcança o bloco que consome o estoque orbital da original.
+          return boost;
+        }
+
+        if(!owner || owner.kit!=='dark_sentinel') return originalConsume(caster);
+        const arr=owner._darkObeliskOrbitOrbs;
+        if(!Array.isArray(arr) || !arr.length) return originalConsume(caster);
+
+        const callWithoutSharedOrb=()=>{
+          const saved=owner._darkObeliskOrbitOrbs;
+          owner._darkObeliskOrbitOrbs=[];
+          try{ return originalConsume(caster); }
+          finally{ owner._darkObeliskOrbitOrbs=saved; }
+        };
+
+        if(now < (+owner._darkObeliskOrbConsumeNextAt||0)) return callWithoutSharedOrb();
+
+        let chosen=-1;
+        let oldest=Infinity;
+        for(let i=0;i<arr.length;i++){
+          const orb=arr[i];
+          const born=Number.isFinite(+orb?.bornAt) ? +orb.bornAt : (Number.isFinite(+orb?.t0) ? +orb.t0 : now-CFG.minVisibleMs);
+          if((now-born) < Math.max(0,+CFG.minVisibleMs||0)) continue;
+          if(born<oldest){ oldest=born; chosen=i; }
+        }
+        if(chosen<0) return callWithoutSharedOrb();
+
+        // O código original usa pop(); move apenas o orbe elegível para o final.
+        const eligible=arr.splice(chosen,1)[0];
+        arr.push(eligible);
+        const before=arr.length;
+        const result=originalConsume(caster);
+        if(arr.length<before){
+          owner._darkObeliskOrbConsumeNextAt=now+Math.max(120,+CFG.consumeCooldownMs||900);
+        }
+        return result;
+      }catch(err){
+        try{ return originalConsume(caster); }catch(_){ return boost; }
+      }
+    };
+    darkSentinelConsumeObeliskShot=patchedConsume;
+    try{ window.darkSentinelConsumeObeliskShot=patchedConsume; }catch(_){ }
+
+    const originalExplode=darkSentinelExplodeObeliskOrb;
+    const patchedExplode=function(owner,idx,x,y,foe=null){
+      try{
+        const arr=owner && owner._darkObeliskOrbitOrbs;
+        const orb=Array.isArray(arr) ? arr[idx] : null;
+        if(orb){
+          const now=nowMs();
+          const born=Number.isFinite(+orb.bornAt) ? +orb.bornAt : (Number.isFinite(+orb.t0) ? +orb.t0 : now-CFG.minVisibleMs);
+          if((now-born) < Math.max(0,+CFG.minVisibleMs||0)) return false;
+        }
+      }catch(_){ }
+      return originalExplode(owner,idx,x,y,foe);
+    };
+    darkSentinelExplodeObeliskOrb=patchedExplode;
+    try{ window.darkSentinelExplodeObeliskOrb=patchedExplode; }catch(_){ }
+
+    // O canvas usa fade parcial. Apaga a silhueta anterior antes de reconstruir o quadro.
+    const originalBackground=drawBackground;
+    const originalHero=drawHero;
+    let previousDarkBodies=[];
+
+    const patchedBackground=function(){
+      try{
+        if(CFG.eraseGhostBodies && previousDarkBodies.length && typeof withCamera==='function' && typeof ctx!=='undefined'){
+          withCamera(()=>{
+            ctx.save();
+            ctx.globalCompositeOperation='destination-out';
+            ctx.fillStyle='rgba(0,0,0,1)';
+            ctx.shadowBlur=0;
+            if(ctx.setLineDash) ctx.setLineDash([]);
+            for(const p of previousDarkBodies){
+              ctx.beginPath();
+              ctx.arc(p.x,p.y,p.eraseR,0,Math.PI*2-1e-4);
+              ctx.fill();
+            }
+            ctx.restore();
+          });
+        }
+      }catch(_){ }
+      previousDarkBodies=[];
+      return originalBackground.apply(this,arguments);
+    };
+
+    const drawEnhancedOrbs=(h)=>{
+      if(!CFG.enhanceOrbVisuals || !h || h.isDarkSentinelClone || h.kit!=='dark_sentinel') return;
+      const orbs=h._darkObeliskOrbitOrbs||[];
+      if(!orbs.length || typeof withCamera!=='function' || typeof ctx==='undefined') return;
+      const now=nowMs();
+      withCamera(()=>{
+        ctx.save();
+        ctx.globalCompositeOperation='lighter';
+        for(let i=0;i<orbs.length;i++){
+          const orb=orbs[i];
+          const op=darkSentinelObeliskOrbPos(h,orb,now);
+          const pulse=.5+.5*Math.sin(now*.012+i*1.7);
+          const radius=Math.max(12,+orb.r||+(DARK_SENTINEL.obeliskOrbOrbitR||74));
+          const core=(typeof darkSentinelIncandescentColor==='function') ? darkSentinelIncandescentColor('bolt',.98) : 'rgba(214,174,255,.98)';
+          const wave=(typeof darkSentinelIncandescentColor==='function') ? darkSentinelIncandescentColor('wave',.92) : 'rgba(174,108,255,.92)';
+
+          ctx.shadowBlur=16; ctx.shadowColor=core;
+          ctx.strokeStyle=(typeof darkSentinelIncandescentColor==='function') ? darkSentinelIncandescentColor('wave',.28+.18*pulse) : 'rgba(174,108,255,.38)';
+          ctx.lineWidth=2;
+          ctx.beginPath();
+          ctx.arc(h.x,h.y,radius,op.a-(.34+.10*pulse),op.a-.04);
+          ctx.stroke();
+
+          ctx.fillStyle=(typeof darkSentinelIncandescentColor==='function') ? darkSentinelIncandescentColor('wave',.18+.08*pulse) : 'rgba(174,108,255,.22)';
+          ctx.beginPath(); ctx.arc(op.x,op.y,15+4*pulse,0,Math.PI*2-1e-4); ctx.fill();
+
+          ctx.shadowBlur=28; ctx.shadowColor=core; ctx.fillStyle=core;
+          ctx.beginPath(); ctx.arc(op.x,op.y,5.6+.7*pulse,0,Math.PI*2-1e-4); ctx.fill();
+          ctx.shadowBlur=10; ctx.shadowColor='#fff'; ctx.fillStyle='rgba(255,255,255,.94)';
+          ctx.beginPath(); ctx.arc(op.x,op.y,1.8,0,Math.PI*2-1e-4); ctx.fill();
+          ctx.shadowBlur=18; ctx.shadowColor=wave; ctx.strokeStyle=wave; ctx.lineWidth=1.55;
+          ctx.beginPath(); ctx.arc(op.x,op.y,11.5+1.2*pulse,0,Math.PI*2-1e-4); ctx.stroke();
+        }
+        ctx.restore();
+      });
+    };
+
+    const patchedHero=function(h){
+      const result=originalHero.apply(this,arguments);
+      try{
+        if(h && h.alive && (h.kit==='dark_sentinel' || h.isDarkSentinelClone)){
+          const baseR=Math.max(5,+h.r||10);
+          const orbitR=Math.max(0,+(DARK_SENTINEL.obeliskOrbOrbitR||74));
+          previousDarkBodies.push({
+            x:+h.x||0,
+            y:+h.y||0,
+            eraseR:h.isDarkSentinelClone ? baseR*3.30+22 : Math.max(baseR*4.6+32,orbitR+42)
+          });
+          drawEnhancedOrbs(h);
+        }
+      }catch(_){ }
+      return result;
+    };
+
+    drawBackground=patchedBackground;
+    drawHero=patchedHero;
+    try{ window.drawBackground=patchedBackground; window.drawHero=patchedHero; }catch(_){ }
+
+    try{ document.title=document.title.replace(/v157\b/i,'v158'); }catch(_){ }
+    console.info('[CosmicHeroes v158] Correção dos orbes da Sentinela instalada.',CFG);
+    return true;
+  }
+
+  let attempts=0;
+  const timer=setInterval(()=>{
+    attempts++;
+    if(installDarkSentinelOrbV158() || attempts>120) clearInterval(timer);
+  },50);
+  installDarkSentinelOrbV158();
+})();
+<\/script>
+`;
+
+  function validate(text){
+    const required=[
+      'function darkSentinelConsumeObeliskShot',
+      'function darkSentinelExplodeObeliskOrb',
+      'function darkSentinelObeliskOrbPos',
+      'function drawBackground',
+      'function drawHero(h)'
+    ];
+    return required.filter(k=>!text.includes(k));
+  }
+
+  input.addEventListener('change',async()=>{
+    const file=input.files&&input.files[0];
+    if(!file) return;
+    sourceName=file.name;
+    sourceText=await file.text();
+    const missing=validate(sourceText);
+    label.textContent=file.name;
+    if(missing.length){
+      button.disabled=true;
+      status.className='err';
+      status.textContent='O arquivo não corresponde à v157 esperada. Não encontrei:\n- '+missing.join('\n- ');
+      return;
+    }
+    button.disabled=false;
+    status.className='ok';
+    status.textContent='Arquivo validado. Pronto para gerar a v158.';
+  });
+
+  button.addEventListener('click',()=>{
+    try{
+      if(!sourceText) throw new Error('Selecione primeiro o arquivo v157.');
+      let output=sourceText;
+      if(output.includes('cosmicheros-v158-dark-sentinel-orb-fix')){
+        throw new Error('Esta cópia já contém a correção v158.');
+      }
+      output=output.replace(/<title>([\s\S]*?)v157([\s\S]*?)<\/title>/i,'<title>$1v158$2</title>');
+      const bodyClose=output.toLowerCase().lastIndexOf('</body>');
+      output=bodyClose>=0 ? output.slice(0,bodyClose)+runtimePatch+'\n'+output.slice(bodyClose) : output+'\n'+runtimePatch;
+
+      const blob=new Blob([output],{type:'text/html;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      const base=(sourceName||'CosmicHeroes_v157.html').replace(/\.html?$/i,'').replace(/v157/ig,'v158');
+      a.download=(/v158/i.test(base)?base:base+'_v158')+'_dark_sentinel_orbs.html';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2500);
+      status.className='ok';
+      status.textContent='v158 gerada com sucesso. O download foi iniciado.';
+    }catch(err){
+      status.className='err';
+      status.textContent='Erro: '+(err&&err.message?err.message:String(err));
+    }
+  });
+})();
+</script>
+</body>
+</html>
